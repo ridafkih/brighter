@@ -54,19 +54,7 @@ final class BoostController {
     }
 
     func refreshBrightness() {
-        guard let current = DisplayBrightness.current() else { return }
-        let previous = observedBrightness ?? current
-        observedBrightness = current
-        guard ContinuousClock.now - lastBrightnessWrite > .milliseconds(600) else { return }
-        if isBoosted, strength > 0, current < SliderLevel.fullBrightness {
-            if SliderLevel.isDrift(from: previous, to: current) {
-                DisplayBrightness.set(1)
-                lastBrightnessWrite = .now
-                Self.log.info("pinned brightness back from \(current)")
-                return
-            }
-            strength = 0
-        }
+        guard ContinuousClock.now - lastBrightnessWrite > .seconds(1), let current = DisplayBrightness.current() else { return }
         guard abs(current - brightness) > 0.002 else { return }
         brightness = current
         Self.log.info("brightness \(current)")
@@ -94,7 +82,6 @@ final class BoostController {
     @ObservationIgnored private var screenSignature: [CGDirectDisplayID] = []
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     @ObservationIgnored private var lastBrightnessWrite: ContinuousClock.Instant = .now - .seconds(10)
-    @ObservationIgnored private var observedBrightness: Double?
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -195,13 +182,11 @@ final class BoostController {
     private func startMonitoring() {
         monitorTask?.cancel()
         monitorTask = Task {
-            var tick = 0
             while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(500))
+                try? await Task.sleep(for: .seconds(2))
                 guard !Task.isCancelled else { return }
                 refreshBrightness()
-                tick += 1
-                if tick.isMultiple(of: 4) { applyTargets(force: sessions.contains { $0.gamma.hasDrifted }) }
+                applyTargets(force: sessions.contains { $0.gamma.hasDrifted })
             }
         }
     }
