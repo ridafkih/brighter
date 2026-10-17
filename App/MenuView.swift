@@ -66,6 +66,7 @@ struct MenuView: View {
                 Text(controller.isArmed ? "On" : "Off")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
