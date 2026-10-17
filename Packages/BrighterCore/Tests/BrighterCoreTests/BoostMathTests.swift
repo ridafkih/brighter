@@ -70,6 +70,27 @@ struct SliderLevelTests {
         #expect(SliderLevel.percent(level: 1.5, headroom: 1.3) == 130)
     }
 
+    @Test func keysStopAtTheNotchOnTheWayUp() {
+        #expect(SliderLevel.step(from: 0.95, up: true, boostEnabled: true) == 1)
+        #expect(SliderLevel.step(from: 1, up: true, boostEnabled: true) == 1.0625)
+        #expect(SliderLevel.step(from: 1.5, up: true, boostEnabled: true) == 1.5)
+    }
+
+    @Test func keysStopAtTheNotchOnTheWayDown() {
+        #expect(SliderLevel.step(from: 1.03, up: false, boostEnabled: true) == 1)
+        #expect(SliderLevel.step(from: 1, up: false, boostEnabled: true) == 0.9375)
+        #expect(SliderLevel.step(from: 0.02, up: false, boostEnabled: true) == 0)
+    }
+
+    @Test func eightKeyPressesCoverTheBoostRange() {
+        let top = (0..<8).reduce(1.0) { level, _ in SliderLevel.step(from: level, up: true, boostEnabled: true) }
+        #expect(top == 1.5)
+    }
+
+    @Test func keysNeverPassOneHundredWithoutBoost() {
+        #expect(SliderLevel.step(from: 1, up: true, boostEnabled: false) == 1)
+    }
+
     @Test func boostIsIndependentOfSystemBrightness() {
         #expect(SliderLevel.level(brightness: 0.94, strength: 0.5, boostEnabled: true) == 1.25)
         #expect(SliderLevel.level(brightness: 0.6, strength: 0, boostEnabled: true) == 0.6)

@@ -83,6 +83,8 @@ final class BoostController {
     @ObservationIgnored private var screenSignature: [CGDirectDisplayID] = []
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     @ObservationIgnored private var terminationSource: DispatchSourceSignal?
+    @ObservationIgnored private var keyTap: BrightnessKeyTap?
+    @ObservationIgnored private var hasRequestedKeyAccess = false
     @ObservationIgnored private var lastBrightnessWrite: ContinuousClock.Instant = .now - .seconds(10)
 
     init(defaults: UserDefaults = .standard) {
@@ -91,6 +93,7 @@ final class BoostController {
         strength = 0
         screenSignature = Self.currentSignature()
         restoreAutoBrightness()
+        keyTap = BrightnessKeyTap { [weak self] up in self?.step(up: up) }
         observeSystemEvents()
         if isEnabled { engage() }
     }
@@ -138,6 +141,7 @@ final class BoostController {
         guard !Task.isCancelled else { return }
         status = .boosted
         suspendAutoBrightness()
+        startKeyTap()
         startMonitoring()
     }
 
@@ -209,7 +213,18 @@ final class BoostController {
             session.window.close()
         }
         sessions = []
+        keyTap?.stop()
         restoreAutoBrightness()
+    }
+
+    private func step(up: Bool) {
+        level = SliderLevel.step(from: level, up: up, boostEnabled: isBoosted)
+    }
+
+    private func startKeyTap() {
+        guard let keyTap, !keyTap.start(), !hasRequestedKeyAccess else { return }
+        hasRequestedKeyAccess = true
+        _ = BrightnessKeyTap.requestAccess()
     }
 
     private func suspendAutoBrightness() {
@@ -248,6 +263,9 @@ final class BoostController {
             observe(workspace, name) { controller in
                 if controller.isEnabled { controller.engage(after: .seconds(2)) }
             }
+        }
+        observe(DistributedNotificationCenter.default(), Notification.Name("com.apple.accessibility.api")) { controller in
+            if controller.isBoosted { controller.keyTap?.start() }
         }
         observe(app, NSApplication.willTerminateNotification) { controller in
             controller.teardown()

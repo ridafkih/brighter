@@ -1,6 +1,17 @@
 public enum SliderLevel {
     public static let boostSpan: Double = 0.5
 
+    public static let regularStep: Double = 1.0 / 16
+    public static let boostStep: Double = boostSpan / 8
+
+    public static func step(from level: Double, up: Bool, boostEnabled: Bool) -> Double {
+        let upper = upperBound(boostEnabled: boostEnabled)
+        if up {
+            return level < 0.999 ? min(level + regularStep, 1) : min(level + boostStep, upper)
+        }
+        return level > 1.001 ? max(level - boostStep, 1) : max(level - regularStep, 0)
+    }
+
     public static func upperBound(boostEnabled: Bool) -> Double {
         boostEnabled ? 1 + boostSpan : 1
     }
