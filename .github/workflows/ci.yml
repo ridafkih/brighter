@@ -27,6 +27,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: macos-26
+    environment: release
     concurrency:
       group: release
       cancel-in-progress: false
@@ -78,6 +79,7 @@ jobs:
           xcodegen generate --quiet
           xcodebuild -project Brighter.xcodeproj -scheme Brighter -configuration Release -derivedDataPath build -quiet build \
             CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM=HQLM8PHWCM \
             OTHER_CODE_SIGN_FLAGS="--timestamp" \
             MARKETING_VERSION="$VERSION" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
