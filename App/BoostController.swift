@@ -82,6 +82,7 @@ final class BoostController {
     @ObservationIgnored private var monitorTask: Task<Void, Never>?
     @ObservationIgnored private var screenSignature: [CGDirectDisplayID] = []
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    @ObservationIgnored private var terminationSource: DispatchSourceSignal?
     @ObservationIgnored private var lastBrightnessWrite: ContinuousClock.Instant = .now - .seconds(10)
 
     init(defaults: UserDefaults = .standard) {
@@ -251,6 +252,16 @@ final class BoostController {
         observe(app, NSApplication.willTerminateNotification) { controller in
             controller.teardown()
         }
+
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler {
+            MainActor.assumeIsolated {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+        source.resume()
+        terminationSource = source
     }
 
     private func observe(_ center: NotificationCenter, _ name: Notification.Name, handler: @escaping @MainActor (BoostController) -> Void) {
