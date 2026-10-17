@@ -70,14 +70,9 @@ struct SliderLevelTests {
         #expect(SliderLevel.percent(level: 1.5, headroom: 1.3) == 130)
     }
 
-    @Test func strengthPausesBelowFullBrightness() {
-        #expect(SliderLevel.effectiveStrength(brightness: 0.97, strength: 0.75) == 0)
-        #expect(SliderLevel.effectiveStrength(brightness: 0.998, strength: 0.75) == 0.75)
-        #expect(SliderLevel.effectiveStrength(brightness: 1, strength: 0.75) == 0.75)
-    }
-
-    @Test func boostOnlyCountsAtFullBrightness() {
-        #expect(SliderLevel.level(brightness: 0.6, strength: 0.8, boostEnabled: true) == 0.6)
+    @Test func boostIsIndependentOfSystemBrightness() {
+        #expect(SliderLevel.level(brightness: 0.94, strength: 0.5, boostEnabled: true) == 1.25)
+        #expect(SliderLevel.level(brightness: 0.6, strength: 0, boostEnabled: true) == 0.6)
         #expect(SliderLevel.level(brightness: 1, strength: 0.5, boostEnabled: true) == 1.25)
     }
 

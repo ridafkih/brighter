@@ -150,8 +150,7 @@ final class BoostController {
     }
 
     private func targetFactor(for displayID: CGDirectDisplayID) -> Float {
-        let strength = SliderLevel.effectiveStrength(brightness: brightness, strength: strength)
-        return BoostMath.factor(headroom: Self.headroom(for: displayID), strength: Float(strength))
+        BoostMath.factor(headroom: Self.headroom(for: displayID), strength: Float(strength))
     }
 
     private func fadeToTargets() async {
