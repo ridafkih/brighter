@@ -12,6 +12,7 @@ macOS menu-bar app that unlocks the extra brightness of XDR/EDR displays for bri
 - `make build`: regenerate project + `xcodebuild` Debug into `build/`.
 - `make run`: build, kill any running copy, launch.
 - `make install`: release build into `/Applications`.
+- `make release`: zip the release build and `gh release create v<CFBundleShortVersionString>`; bump the version in `project.yml` first. `install.sh` (the README one-liner) downloads `releases/latest/download/Brighter.zip`, so every release must attach `Brighter.zip`.
 - Signing: optional gitignored `Local.mk` with `SIGN_IDENTITY = <cert SHA>`; without it builds are ad-hoc. A real identity keeps TCC grants (Accessibility) stable across rebuilds.
 - Settings: `defaults read com.ridafkih.Brighter` (`enabled` only). Toggling it there + relaunch drives the app without clicking the menu bar. Run the binary with `OS_ACTIVITY_DT_MODE=1` to see the `boost` log category in the terminal.
 
