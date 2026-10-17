@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="docs/logo.svg" width="88" alt="">
-  <h1>Brighter</h1>
-  <p>Unlock the extra brightness of your Mac's XDR display, right from the menu bar.</p>
+  <img src="docs/banner.png" width="800" alt="Brighter: push your Mac's XDR display past 100%.">
   <span>
     <a href="#install">Install</a>
     <span>&nbsp;&nbsp;·&nbsp;&nbsp;</span>
