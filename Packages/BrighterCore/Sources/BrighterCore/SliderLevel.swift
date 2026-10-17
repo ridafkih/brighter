@@ -21,6 +21,12 @@ public enum SliderLevel {
         return (min(level, 1), max(level - 1, 0) / boostSpan)
     }
 
+    public static func percent(level: Double, headroom: Float = BoostMath.defaultCap) -> Int {
+        guard level > 1 else { return Int((clamp(level) * 100).rounded()) }
+        let strength = (min(level, 1 + boostSpan) - 1) / boostSpan
+        return Int((Double(BoostMath.factor(headroom: headroom, strength: Float(strength))) * 100).rounded())
+    }
+
     private static func clamp(_ value: Double) -> Double {
         min(max(value, 0), 1)
     }

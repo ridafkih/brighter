@@ -61,6 +61,15 @@ struct SliderLevelTests {
         #expect(parts.strength == 0)
     }
 
+    @Test(arguments: [(0.8, 80), (1.0, 100), (1.25, 130), (1.5, 160), (2.0, 160)])
+    func percentCountsPastOneHundred(level: Double, expected: Int) {
+        #expect(SliderLevel.percent(level: level) == expected)
+    }
+
+    @Test func percentRespectsLimitedHeadroom() {
+        #expect(SliderLevel.percent(level: 1.5, headroom: 1.3) == 130)
+    }
+
     @Test func strengthPausesBelowFullBrightness() {
         #expect(SliderLevel.effectiveStrength(brightness: 0.97, strength: 0.75) == 0)
         #expect(SliderLevel.effectiveStrength(brightness: 0.998, strength: 0.75) == 0.75)

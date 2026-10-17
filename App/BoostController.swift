@@ -17,7 +17,7 @@ final class BoostController {
             switch self {
             case .off: "Off"
             case .engaging: "Turning on…"
-            case .boosted: "Boosting XDR brightness"
+            case .boosted: "XDR unlocked"
             case .suspended: "Paused while the display sleeps"
             case .unsupported: "No XDR display found"
             case .failed: "Couldn't unlock, retrying…"
@@ -36,13 +36,13 @@ final class BoostController {
 
     private enum Keys {
         static let enabled = "enabled"
-        static let strength = "strength"
     }
 
     var isEnabled: Bool {
         didSet {
             guard isEnabled != oldValue else { return }
             defaults.set(isEnabled, forKey: Keys.enabled)
+            if isEnabled { strength = 0 }
             isEnabled ? engage() : disengage(status: .off)
         }
     }
@@ -72,7 +72,6 @@ final class BoostController {
 
     var strength: Double {
         didSet {
-            defaults.set(strength, forKey: Keys.strength)
             if status == .boosted { applyTargets() }
         }
     }
@@ -80,10 +79,9 @@ final class BoostController {
     private(set) var status: Status = .off {
         didSet { if status != oldValue { Self.log.info("status \(String(describing: self.status), privacy: .public) brightness \(self.brightness)") } }
     }
-    private(set) var appliedFactor: Float = 1
-
-    var boostPercent: Int {
-        Int((max(appliedFactor, 1) - 1) * 100 + 0.5)
+    var levelPercent: Int {
+        let headroom = sessions.map { Self.headroom(for: $0.displayID) }.max() ?? BoostMath.defaultCap
+        return SliderLevel.percent(level: level, headroom: headroom)
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -96,9 +94,8 @@ final class BoostController {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        defaults.register(defaults: [Keys.strength: 0.75])
         isEnabled = defaults.bool(forKey: Keys.enabled)
-        strength = defaults.double(forKey: Keys.strength)
+        strength = 0
         screenSignature = Self.currentSignature()
         observeSystemEvents()
         if isEnabled { engage() }
@@ -179,7 +176,6 @@ final class BoostController {
             }
             try? await Task.sleep(for: .milliseconds(20))
         }
-        appliedFactor = sessions.map(\.factor).max() ?? 1
     }
 
     private func applyTargets(force: Bool = false) {
@@ -190,8 +186,6 @@ final class BoostController {
             Self.log.info("factor \(target) display \(self.sessions[index].displayID)")
             sessions[index].factor = target
         }
-        let factor = sessions.map(\.factor).max() ?? 1
-        if factor != appliedFactor { appliedFactor = factor }
     }
 
     private func startMonitoring() {
@@ -221,7 +215,6 @@ final class BoostController {
             session.window.close()
         }
         sessions = []
-        appliedFactor = 1
     }
 
     private func observeSystemEvents() {

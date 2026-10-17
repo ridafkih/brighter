@@ -11,7 +11,7 @@ macOS menu-bar app that unlocks the extra brightness of XDR/EDR displays for bri
 - `make test`: `swift test` on BrighterCore (fast inner loop).
 - `make build`: regenerate project + `xcodebuild` Debug into `build/`.
 - `make run`: build, kill any running copy, launch.
-- Settings: `defaults read com.ridafkih.Brighter` (`enabled`, `strength`). Toggling `enabled` there + relaunch drives the app without clicking the menu bar.
+- Settings: `defaults read com.ridafkih.Brighter` (`enabled` only). Toggling it there + relaunch drives the app without clicking the menu bar. Run the binary with `OS_ACTIVITY_DT_MODE=1` to see the `boost` log category in the terminal.
 
 ## Definition of done
 - `make test` and `make build` pass with zero warnings.
@@ -33,4 +33,4 @@ macOS menu-bar app that unlocks the extra brightness of XDR/EDR displays for bri
 - Public APIs for the boost itself. The one private API is DisplayServices (`DisplayServicesGetBrightness`/`SetBrightness`), loaded with `dlopen` so a missing symbol degrades instead of crashing.
 
 ## Slider model
-One slider. Boost off: 0–100% system brightness. Boost on: range extends to `1 + SliderLevel.boostSpan`, with a notch at 100%; past the notch is boost strength. Boost only applies at full brightness (`SliderLevel.effectiveStrength`): external dips (keys, auto-brightness, ramping) pause it without touching the saved strength; dragging below the notch is explicit and zeroes it.
+One slider. Boost off: 0–100% system brightness. Boost on: range extends to `1 + SliderLevel.boostSpan`, with a notch at 100%; past the notch is boost strength. Boost only applies at full brightness (`SliderLevel.effectiveStrength`): external dips (keys, auto-brightness, ramping) pause it without touching the saved strength; dragging below the notch is explicit and zeroes it. Turning boost on (toggle or launch) always starts at strength 0, pinned at the notch; strength is never persisted.

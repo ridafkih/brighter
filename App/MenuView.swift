@@ -63,7 +63,7 @@ struct MenuView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Brighter")
                     .font(.system(size: 13, weight: .semibold))
-                Text(subtitle)
+                Text(controller.status.label)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -79,7 +79,6 @@ struct MenuView: View {
         }
         .frame(height: 32)
         .animation(.snappy, value: controller.isEnabled)
-        .animation(.snappy, value: controller.boostPercent)
     }
 
     private var brightness: some View {
@@ -89,7 +88,7 @@ struct MenuView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(levelLabel)
+                Text("\(controller.levelPercent)%")
                     .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(controller.level > 1 ? AnyShapeStyle(.orange) : AnyShapeStyle(.secondary))
                     .contentTransition(.numericText())
@@ -101,15 +100,6 @@ struct MenuView: View {
             )
         }
         .animation(.snappy, value: controller.isEnabled)
-    }
-
-    private var subtitle: String {
-        controller.status == .boosted ? "\(controller.boostPercent)% brighter" : controller.status.label
-    }
-
-    private var levelLabel: String {
-        let level = controller.level
-        return level > 1 ? "XDR +\(Int(((level - 1) / SliderLevel.boostSpan * 100).rounded()))%" : "\(Int((level * 100).rounded()))%"
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) -> Bool {
