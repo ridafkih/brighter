@@ -1,6 +1,11 @@
 public enum SliderLevel {
     public static let boostSpan: Double = 0.5
     public static let fullBrightness: Double = 0.995
+    public static let deliberateStep: Double = 0.015
+
+    public static func isDrift(from previous: Double, to current: Double) -> Bool {
+        current < fullBrightness && previous - current < deliberateStep
+    }
 
     public static func upperBound(boostEnabled: Bool) -> Double {
         boostEnabled ? 1 + boostSpan : 1

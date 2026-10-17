@@ -40,7 +40,7 @@ struct MenuView: View {
         .frame(width: 280)
         .task {
             while !Task.isCancelled {
-                controller.refreshBrightness()
+                if !controller.isBoosted { controller.refreshBrightness() }
                 try? await Task.sleep(for: .milliseconds(500))
             }
         }

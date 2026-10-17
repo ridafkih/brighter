@@ -70,6 +70,11 @@ struct SliderLevelTests {
         #expect(SliderLevel.percent(level: 1.5, headroom: 1.3) == 130)
     }
 
+    @Test(arguments: [(0.999, 0.99, true), (0.96, 0.955, true), (1.0, 0.997, false), (1.0, 0.9375, false), (0.99, 0.97, false)])
+    func autoBrightnessDriftIsSeparatedFromKeyPresses(previous: Double, current: Double, isDrift: Bool) {
+        #expect(SliderLevel.isDrift(from: previous, to: current) == isDrift)
+    }
+
     @Test func strengthPausesBelowFullBrightness() {
         #expect(SliderLevel.effectiveStrength(brightness: 0.97, strength: 0.75) == 0)
         #expect(SliderLevel.effectiveStrength(brightness: 0.998, strength: 0.75) == 0.75)
