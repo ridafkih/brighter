@@ -7,6 +7,7 @@ import os
 final class BoostController {
     enum Status: Equatable {
         case off
+        case armed
         case engaging
         case boosted
         case suspended
@@ -32,24 +33,24 @@ final class BoostController {
             guard isEnabled != oldValue else { return }
             defaults.set(isEnabled, forKey: Keys.enabled)
             if isEnabled { strength = 0 }
-            isEnabled ? engage() : disengage(status: .off)
+            isEnabled ? arm() : disengage(status: .off)
         }
     }
 
     private(set) var brightness: Double = DisplayBrightness.current() ?? 1
 
-    var isBoosted: Bool { status == .boosted }
+    var isArmed: Bool { isEnabled && [.armed, .engaging, .boosted, .failed].contains(status) }
 
     var level: Double {
-        get { SliderLevel.level(brightness: brightness, strength: strength, boostEnabled: isBoosted) }
+        get { SliderLevel.level(brightness: brightness, strength: strength, boostEnabled: isArmed) }
         set {
-            let parts = SliderLevel.split(level: newValue, boostEnabled: isBoosted)
+            let parts = SliderLevel.split(level: newValue, boostEnabled: isArmed)
             if abs(parts.brightness - brightness) > 0.0005 {
                 brightness = parts.brightness
                 DisplayBrightness.set(parts.brightness)
                 lastBrightnessWrite = .now
             }
-            if isBoosted, abs(parts.strength - strength) > 0.0005 { strength = parts.strength }
+            if isArmed, abs(parts.strength - strength) > 0.0005 { strength = parts.strength }
         }
     }
 
@@ -63,7 +64,12 @@ final class BoostController {
 
     var strength: Double {
         didSet {
-            if status == .boosted { applyTargets() }
+            guard isArmed else { return }
+            if strength > 0 {
+                if status == .boosted { applyTargets() } else if status != .engaging { engage() }
+            } else if status == .engaging || status == .boosted {
+                release()
+            }
         }
     }
 
@@ -93,7 +99,27 @@ final class BoostController {
         screenSignature = Self.currentSignature()
         keyTap = BrightnessKeyTap { [weak self] up in self?.step(up: up) }
         observeSystemEvents()
-        if isEnabled { engage() }
+        if isEnabled { arm() }
+    }
+
+    private func arm() {
+        engageTask?.cancel()
+        teardown()
+        let supported = NSScreen.screens.contains { $0.maximumPotentialExtendedDynamicRangeColorComponentValue > 1 }
+        status = supported ? .armed : .unsupported
+        guard supported else { return }
+        startKeyTap()
+        if strength > 0 { engage() }
+    }
+
+    private func release() {
+        engageTask?.cancel()
+        engageTask = Task {
+            await fadeToTargets()
+            guard !Task.isCancelled else { return }
+            teardown()
+            status = .armed
+        }
     }
 
     private func engage(after delay: Duration = .zero) {
@@ -138,7 +164,6 @@ final class BoostController {
         await fadeToTargets()
         guard !Task.isCancelled else { return }
         status = .boosted
-        startKeyTap()
         startMonitoring()
     }
 
@@ -199,6 +224,7 @@ final class BoostController {
         engageTask?.cancel()
         engageTask = nil
         teardown()
+        keyTap?.stop()
         status = newStatus
     }
 
@@ -210,11 +236,10 @@ final class BoostController {
             session.window.close()
         }
         sessions = []
-        keyTap?.stop()
     }
 
     private func step(up: Bool) {
-        level = SliderLevel.step(from: level, up: up, boostEnabled: isBoosted)
+        level = SliderLevel.step(from: level, up: up, boostEnabled: isArmed)
     }
 
     private func startKeyTap() {
@@ -231,7 +256,7 @@ final class BoostController {
             let signature = Self.currentSignature()
             guard signature != controller.screenSignature else { return }
             controller.screenSignature = signature
-            if controller.isEnabled { controller.engage(after: .seconds(1)) }
+            if controller.isArmed, controller.strength > 0 { controller.engage(after: .seconds(1)) }
         }
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
             observe(workspace, name) { controller in
@@ -240,11 +265,12 @@ final class BoostController {
         }
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
             observe(workspace, name) { controller in
-                if controller.isEnabled { controller.engage(after: .seconds(2)) }
+                guard controller.isEnabled, controller.status == .suspended else { return }
+                controller.arm()
             }
         }
         observe(DistributedNotificationCenter.default(), Notification.Name("com.apple.accessibility.api")) { controller in
-            if controller.isBoosted { controller.keyTap?.start() }
+            if controller.isArmed { controller.keyTap?.start() }
         }
         observe(app, NSApplication.willTerminateNotification) { controller in
             controller.teardown()
