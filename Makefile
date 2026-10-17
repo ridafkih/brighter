@@ -13,12 +13,12 @@ test:
 	swift test --package-path Packages/BrighterCore
 
 run: build
-	pkill -x Brighter || true
+	pkill -x Brighter; while pgrep -x Brighter >/dev/null; do sleep 0.1; done
 	open build/Build/Products/Debug/Brighter.app
 
 install: generate
 	xcodebuild -project Brighter.xcodeproj -scheme Brighter -configuration Release -derivedDataPath build -quiet build CODE_SIGN_IDENTITY="$(SIGN_IDENTITY)"
-	pkill -x Brighter || true
+	pkill -x Brighter; while pgrep -x Brighter >/dev/null; do sleep 0.1; done
 	rm -rf /Applications/Brighter.app
 	cp -R build/Build/Products/Release/Brighter.app /Applications/
 	open /Applications/Brighter.app
