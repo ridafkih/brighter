@@ -169,8 +169,13 @@ final class BoostController {
 
     private func waitForHeadroom(timeout: Duration = .seconds(10)) async -> Bool {
         let deadline = ContinuousClock.now + timeout
+        var previous: Float = 0
+        var steadySamples = 0
         while ContinuousClock.now < deadline {
-            if !sessions.isEmpty, sessions.allSatisfy({ Self.headroom(for: $0.displayID) > BoostMath.minimumHeadroom }) {
+            let headroom = sessions.map { Self.headroom(for: $0.displayID) }.min() ?? 1
+            steadySamples = abs(headroom - previous) < 0.01 ? steadySamples + 1 : 0
+            previous = headroom
+            if headroom >= BoostMath.defaultCap || (headroom > BoostMath.minimumHeadroom && steadySamples >= 3) {
                 return true
             }
             try? await Task.sleep(for: .milliseconds(100))
