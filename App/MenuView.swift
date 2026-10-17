@@ -112,6 +112,7 @@ struct LevelSlider: View {
     @Binding var value: Double
     let upperBound: Double
     let notch: Double?
+    @Environment(\.colorScheme) private var colorScheme
 
     private let trackHeight: CGFloat = 20
     private let notchGap: CGFloat = 4
@@ -135,7 +136,7 @@ struct LevelSlider: View {
                     .opacity(notch == nil ? 0 : 1)
 
                 Rectangle()
-                    .fill(.white)
+                    .fill(colorScheme == .dark ? Color.white : Color.black.opacity(0.78))
                     .frame(width: max(min(fillWidth, notchX), 0), height: trackHeight)
 
                 Rectangle()
@@ -145,7 +146,7 @@ struct LevelSlider: View {
 
                 Image(systemName: "sun.max.fill")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.black.opacity(0.55))
+                    .foregroundStyle(colorScheme == .dark ? Color.black.opacity(0.55) : Color.white.opacity(0.85))
                     .frame(width: trackHeight, height: trackHeight)
                     .offset(x: 2)
 
