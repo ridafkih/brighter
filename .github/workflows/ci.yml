@@ -49,8 +49,10 @@ jobs:
           latest=$(gh release view --json tagName -q .tagName 2>/dev/null || echo v0.0.0)
           IFS=. read -r major minor patch <<< "${latest#v}"
           labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" -q '[.[].labels[].name] | join(",")')
-          if [[ ",$labels," == *",breaking,"* ]]; then
+          if [[ ",$labels," == *",major,"* ]]; then
             major=$((major + 1)); minor=0; patch=0
+          elif [[ ",$labels," == *",breaking,"* ]]; then
+            minor=$((minor + 1)); patch=0
           else
             patch=$((patch + 1))
           fi
