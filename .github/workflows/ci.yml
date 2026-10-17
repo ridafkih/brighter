@@ -27,8 +27,12 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: macos-26
+    concurrency:
+      group: release
+      cancel-in-progress: false
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,9 +42,18 @@ jobs:
 
       - name: Version
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          base=$(sed -n 's/.*MARKETING_VERSION: "\([0-9]*\.[0-9]*\)\..*/\1/p' project.yml)
-          echo "version=$base.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
+          latest=$(gh release view --json tagName -q .tagName 2>/dev/null || echo v0.0.0)
+          IFS=. read -r major minor patch <<< "${latest#v}"
+          labels=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" -q '[.[].labels[].name] | join(",")')
+          if [[ ",$labels," == *",breaking,"* ]]; then
+            major=$((major + 1)); minor=0; patch=0
+          else
+            patch=$((patch + 1))
+          fi
+          echo "version=$major.$minor.$patch" >> "$GITHUB_OUTPUT"
 
       - name: Import signing certificate
         env:

@@ -12,7 +12,7 @@ macOS menu-bar app that unlocks the extra brightness of XDR/EDR displays for bri
 - `make build`: regenerate project + `xcodebuild` Debug into `build/`.
 - `make run`: build, kill any running copy, launch.
 - `make install`: release build into `/Applications`.
-- Releases are CI-only (`.github/workflows/ci.yml`): every push to `main` tests, builds, signs with Developer ID, notarizes, staples and publishes `v<major.minor from MARKETING_VERSION>.<run number>` with `Brighter.zip`. `install.sh` (the README one-liner) downloads `releases/latest/download/Brighter.zip`. Secrets: `DEVELOPER_ID_P12`, `DEVELOPER_ID_P12_PASSWORD`, `ASC_KEY_P8`, `ASC_KEY_ID`, `ASC_ISSUER_ID`; they exist only in the release job, never on pull requests.
+- Releases are CI-only (`.github/workflows/ci.yml`): every push to `main` tests, builds, signs with Developer ID, notarizes, staples and publishes the next semver after the latest release (patch bump; major bump when the merged PR has the `breaking` label) with `Brighter.zip`. `install.sh` (the README one-liner) downloads `releases/latest/download/Brighter.zip`. Secrets: `DEVELOPER_ID_P12`, `DEVELOPER_ID_P12_PASSWORD`, `ASC_KEY_P8`, `ASC_KEY_ID`, `ASC_ISSUER_ID`; they exist only in the release job, never on pull requests.
 - Signing: optional gitignored `Local.mk` with `SIGN_IDENTITY = <cert SHA>`; without it builds are ad-hoc. A real identity keeps TCC grants (Accessibility) stable across rebuilds.
 - Settings: `defaults read com.ridafkih.Brighter` (`enabled` only). Toggling it there + relaunch drives the app without clicking the menu bar. Run the binary with `OS_ACTIVITY_DT_MODE=1` to see the `boost` log category in the terminal.
 
