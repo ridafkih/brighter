@@ -114,8 +114,8 @@ struct LevelSlider: View {
     let notch: Double?
 
     private let trackHeight: CGFloat = 20
-    private let notchGap: CGFloat = 4
-    private let notchHeight: CGFloat = 5
+    private let notchGap: CGFloat = 5
+    private let notchHeight: CGFloat = 7
 
     var body: some View {
         GeometryReader { geometry in
@@ -156,9 +156,9 @@ struct LevelSlider: View {
                     .offset(x: fillWidth - trackHeight / 2)
 
                 Capsule()
-                    .fill(.secondary)
-                    .frame(width: 2, height: notchHeight)
-                    .offset(x: notchX - 1, y: trackHeight + notchGap)
+                    .fill(.orange)
+                    .frame(width: 3, height: notchHeight)
+                    .offset(x: notchX - 1.5, y: trackHeight + notchGap)
                     .opacity(notch == nil ? 0 : 1)
             }
             .mask(alignment: .topLeading) {
