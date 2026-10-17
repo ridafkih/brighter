@@ -51,11 +51,11 @@ struct MenuView: View {
             Button {
                 controller.isEnabled.toggle()
             } label: {
-                Image(systemName: controller.isEnabled ? "sun.max.fill" : "sun.max")
+                Image(systemName: controller.isBoosted ? "sun.max.fill" : "sun.max")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(controller.isEnabled ? .white : .primary)
+                    .foregroundStyle(controller.isBoosted ? .white : .primary)
                     .frame(width: 32, height: 32)
-                    .background(Circle().fill(controller.isEnabled ? AnyShapeStyle(.orange) : AnyShapeStyle(.quaternary)))
+                    .background(Circle().fill(controller.isBoosted ? AnyShapeStyle(.orange) : AnyShapeStyle(.quaternary)))
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.plain)
@@ -63,11 +63,9 @@ struct MenuView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Brighter")
                     .font(.system(size: 13, weight: .semibold))
-                Text(controller.status.label)
+                Text(controller.isEnabled ? "On" : "Off")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .contentTransition(.numericText())
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -78,7 +76,7 @@ struct MenuView: View {
                 .fixedSize()
         }
         .frame(height: 32)
-        .animation(.snappy, value: controller.isEnabled)
+        .animation(.snappy, value: controller.isBoosted)
     }
 
     private var brightness: some View {
@@ -95,11 +93,11 @@ struct MenuView: View {
             }
             LevelSlider(
                 value: $controller.level,
-                upperBound: SliderLevel.upperBound(boostEnabled: controller.isEnabled),
-                notch: controller.isEnabled ? 1 : nil
+                upperBound: SliderLevel.upperBound(boostEnabled: controller.isBoosted),
+                notch: controller.isBoosted ? 1 : nil
             )
         }
-        .animation(.snappy, value: controller.isEnabled)
+        .animation(.snappy, value: controller.isBoosted)
     }
 
     private func setLaunchAtLogin(_ enabled: Bool) -> Bool {

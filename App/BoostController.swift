@@ -12,17 +12,6 @@ final class BoostController {
         case suspended
         case unsupported
         case failed
-
-        var label: String {
-            switch self {
-            case .off: "Off"
-            case .engaging: "Turning on…"
-            case .boosted: "XDR unlocked"
-            case .suspended: "Paused while the display sleeps"
-            case .unsupported: "No XDR display found"
-            case .failed: "Couldn't unlock, retrying…"
-            }
-        }
     }
 
     private struct Session {
@@ -49,16 +38,18 @@ final class BoostController {
 
     private(set) var brightness: Double = DisplayBrightness.current() ?? 1
 
+    var isBoosted: Bool { status == .boosted }
+
     var level: Double {
-        get { SliderLevel.level(brightness: brightness, strength: strength, boostEnabled: isEnabled) }
+        get { SliderLevel.level(brightness: brightness, strength: strength, boostEnabled: isBoosted) }
         set {
-            let parts = SliderLevel.split(level: newValue, boostEnabled: isEnabled)
+            let parts = SliderLevel.split(level: newValue, boostEnabled: isBoosted)
             if abs(parts.brightness - brightness) > 0.0005 {
                 brightness = parts.brightness
                 DisplayBrightness.set(parts.brightness)
                 lastBrightnessWrite = .now
             }
-            if isEnabled, abs(parts.strength - strength) > 0.0005 { strength = parts.strength }
+            if isBoosted, abs(parts.strength - strength) > 0.0005 { strength = parts.strength }
         }
     }
 
