@@ -25,6 +25,7 @@ final class BoostController {
 
     private enum Keys {
         static let enabled = "enabled"
+        static let restoreAutoBrightness = "restoreAutoBrightness"
     }
 
     var isEnabled: Bool {
@@ -88,6 +89,7 @@ final class BoostController {
         isEnabled = defaults.bool(forKey: Keys.enabled)
         strength = 0
         screenSignature = Self.currentSignature()
+        restoreAutoBrightness()
         observeSystemEvents()
         if isEnabled { engage() }
     }
@@ -134,6 +136,7 @@ final class BoostController {
         await fadeToTargets()
         guard !Task.isCancelled else { return }
         status = .boosted
+        suspendAutoBrightness()
         startMonitoring()
     }
 
@@ -205,6 +208,24 @@ final class BoostController {
             session.window.close()
         }
         sessions = []
+        restoreAutoBrightness()
+    }
+
+    private func suspendAutoBrightness() {
+        guard DisplayBrightness.isAutoBrightnessEnabled == true else { return }
+        defaults.set(true, forKey: Keys.restoreAutoBrightness)
+        if DisplayBrightness.setAutoBrightness(false) {
+            Self.log.info("auto-brightness suspended")
+        } else {
+            defaults.removeObject(forKey: Keys.restoreAutoBrightness)
+        }
+    }
+
+    private func restoreAutoBrightness() {
+        guard defaults.bool(forKey: Keys.restoreAutoBrightness) else { return }
+        DisplayBrightness.setAutoBrightness(true)
+        defaults.removeObject(forKey: Keys.restoreAutoBrightness)
+        Self.log.info("auto-brightness restored")
     }
 
     private func observeSystemEvents() {
