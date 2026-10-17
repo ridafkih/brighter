@@ -1,12 +1,5 @@
 <div align="center">
   <img src="docs/banner.png" width="800" alt="Brighter: push your Mac's XDR display past 100%.">
-  <span>
-    <a href="#install">Install</a>
-    <span>&nbsp;&nbsp;·&nbsp;&nbsp;</span>
-    <a href="#usage">Usage</a>
-    <span>&nbsp;&nbsp;·&nbsp;&nbsp;</span>
-    <a href="#contribute">Contribute</a>
-  </span>
 </div>
 <hr>
 
