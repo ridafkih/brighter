@@ -25,7 +25,6 @@ final class BoostController {
 
     private enum Keys {
         static let enabled = "enabled"
-        static let restoreAutoBrightness = "restoreAutoBrightness"
     }
 
     var isEnabled: Bool {
@@ -92,7 +91,6 @@ final class BoostController {
         isEnabled = defaults.bool(forKey: Keys.enabled)
         strength = 0
         screenSignature = Self.currentSignature()
-        restoreAutoBrightness()
         keyTap = BrightnessKeyTap { [weak self] up in self?.step(up: up) }
         observeSystemEvents()
         if isEnabled { engage() }
@@ -140,7 +138,6 @@ final class BoostController {
         await fadeToTargets()
         guard !Task.isCancelled else { return }
         status = .boosted
-        suspendAutoBrightness()
         startKeyTap()
         startMonitoring()
     }
@@ -214,7 +211,6 @@ final class BoostController {
         }
         sessions = []
         keyTap?.stop()
-        restoreAutoBrightness()
     }
 
     private func step(up: Bool) {
@@ -225,23 +221,6 @@ final class BoostController {
         guard let keyTap, !keyTap.start(), !hasRequestedKeyAccess else { return }
         hasRequestedKeyAccess = true
         _ = BrightnessKeyTap.requestAccess()
-    }
-
-    private func suspendAutoBrightness() {
-        guard DisplayBrightness.isAutoBrightnessEnabled == true else { return }
-        defaults.set(true, forKey: Keys.restoreAutoBrightness)
-        if DisplayBrightness.setAutoBrightness(false) {
-            Self.log.info("auto-brightness suspended")
-        } else {
-            defaults.removeObject(forKey: Keys.restoreAutoBrightness)
-        }
-    }
-
-    private func restoreAutoBrightness() {
-        guard defaults.bool(forKey: Keys.restoreAutoBrightness) else { return }
-        DisplayBrightness.setAutoBrightness(true)
-        defaults.removeObject(forKey: Keys.restoreAutoBrightness)
-        Self.log.info("auto-brightness restored")
     }
 
     private func observeSystemEvents() {

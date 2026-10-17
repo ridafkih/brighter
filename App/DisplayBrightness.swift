@@ -6,26 +6,8 @@ enum DisplayBrightness {
     private typealias Setter = @convention(c) (CGDirectDisplayID, Float) -> Int32
 
     private static let handle = dlopen("/System/Library/PrivateFrameworks/DisplayServices.framework/DisplayServices", RTLD_LAZY)
-    private typealias AutoGetter = @convention(c) (CGDirectDisplayID, UnsafeMutablePointer<Bool>) -> Int32
-    private typealias AutoSetter = @convention(c) (CGDirectDisplayID, Bool) -> Int32
-
     private static let getter: Getter? = symbol("DisplayServicesGetBrightness")
     private static let setter: Setter? = symbol("DisplayServicesSetBrightness")
-    private static let autoGetter: AutoGetter? = symbol("DisplayServicesAmbientLightCompensationEnabled")
-    private static let autoSetter: AutoSetter? = symbol("DisplayServicesEnableAmbientLightCompensation")
-
-    static var isAutoBrightnessEnabled: Bool? {
-        guard let autoGetter, let display = builtInDisplay else { return nil }
-        var enabled = false
-        guard autoGetter(display, &enabled) == 0 else { return nil }
-        return enabled
-    }
-
-    @discardableResult
-    static func setAutoBrightness(_ enabled: Bool) -> Bool {
-        guard let autoSetter, let display = builtInDisplay else { return false }
-        return autoSetter(display, enabled) == 0
-    }
 
     static var isAvailable: Bool {
         getter != nil && setter != nil && builtInDisplay != nil
