@@ -51,3 +51,31 @@ struct GammaTableTests {
         #expect(!identity.isClose(to: GammaTable(red: [0], green: [0], blue: [0])))
     }
 }
+
+struct SliderLevelTests {
+    @Test func boostOffIsPlainBrightness() {
+        #expect(SliderLevel.upperBound(boostEnabled: false) == 1)
+        #expect(SliderLevel.level(brightness: 0.6, strength: 0.8, boostEnabled: false) == 0.6)
+        let parts = SliderLevel.split(level: 1.3, boostEnabled: false)
+        #expect(parts.brightness == 1)
+        #expect(parts.strength == 0)
+    }
+
+    @Test func strengthPausesBelowFullBrightness() {
+        #expect(SliderLevel.effectiveStrength(brightness: 0.97, strength: 0.75) == 0)
+        #expect(SliderLevel.effectiveStrength(brightness: 0.998, strength: 0.75) == 0.75)
+        #expect(SliderLevel.effectiveStrength(brightness: 1, strength: 0.75) == 0.75)
+    }
+
+    @Test func boostOnlyCountsAtFullBrightness() {
+        #expect(SliderLevel.level(brightness: 0.6, strength: 0.8, boostEnabled: true) == 0.6)
+        #expect(SliderLevel.level(brightness: 1, strength: 0.5, boostEnabled: true) == 1.25)
+    }
+
+    @Test(arguments: [(0.4, 0.4, 0.0), (1.0, 1.0, 0.0), (1.25, 1.0, 0.5), (1.5, 1.0, 1.0), (2.0, 1.0, 1.0)])
+    func splitAroundTheNotch(level: Double, brightness: Double, strength: Double) {
+        let parts = SliderLevel.split(level: level, boostEnabled: true)
+        #expect(parts.brightness == brightness)
+        #expect(abs(parts.strength - strength) < 0.0001)
+    }
+}

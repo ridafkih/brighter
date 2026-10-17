@@ -28,10 +28,6 @@ targets:
         CFBundleVersion: "1"
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
-    entitlements:
-      path: App/Brighter.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ridafkih.Brighter

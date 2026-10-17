@@ -4,6 +4,5 @@ build/
 DerivedData/
 *.xcodeproj/
 App/Info.plist
-App/Brighter.entitlements
 .swiftpm/
 xcuserdata/

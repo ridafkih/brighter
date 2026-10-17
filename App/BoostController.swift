@@ -1,6 +1,7 @@
 import AppKit
 import BrighterCore
 import Observation
+import os
 
 @Observable
 final class BoostController {
@@ -19,7 +20,7 @@ final class BoostController {
             case .boosted: "Boosting XDR brightness"
             case .suspended: "Paused while the display sleeps"
             case .unsupported: "No XDR display found"
-            case .failed: "macOS didn't grant extra brightness, retrying"
+            case .failed: "Couldn't unlock, retrying…"
             }
         }
     }
@@ -30,6 +31,8 @@ final class BoostController {
         let gamma: GammaController
         var factor: Float = 1
     }
+
+    private static let log = Logger(subsystem: "com.ridafkih.Brighter", category: "boost")
 
     private enum Keys {
         static let enabled = "enabled"
@@ -44,6 +47,29 @@ final class BoostController {
         }
     }
 
+    private(set) var brightness: Double = DisplayBrightness.current() ?? 1
+
+    var level: Double {
+        get { SliderLevel.level(brightness: brightness, strength: strength, boostEnabled: isEnabled) }
+        set {
+            let parts = SliderLevel.split(level: newValue, boostEnabled: isEnabled)
+            if abs(parts.brightness - brightness) > 0.0005 {
+                brightness = parts.brightness
+                DisplayBrightness.set(parts.brightness)
+                lastBrightnessWrite = .now
+            }
+            if isEnabled, abs(parts.strength - strength) > 0.0005 { strength = parts.strength }
+        }
+    }
+
+    func refreshBrightness() {
+        guard ContinuousClock.now - lastBrightnessWrite > .seconds(1), let current = DisplayBrightness.current() else { return }
+        guard abs(current - brightness) > 0.002 else { return }
+        brightness = current
+        Self.log.info("brightness \(current)")
+        if status == .boosted { applyTargets() }
+    }
+
     var strength: Double {
         didSet {
             defaults.set(strength, forKey: Keys.strength)
@@ -51,7 +77,14 @@ final class BoostController {
         }
     }
 
-    private(set) var status: Status = .off
+    private(set) var status: Status = .off {
+        didSet { if status != oldValue { Self.log.info("status \(String(describing: self.status), privacy: .public) brightness \(self.brightness)") } }
+    }
+    private(set) var appliedFactor: Float = 1
+
+    var boostPercent: Int {
+        Int((max(appliedFactor, 1) - 1) * 100 + 0.5)
+    }
 
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private var sessions: [Session] = []
@@ -59,6 +92,7 @@ final class BoostController {
     @ObservationIgnored private var monitorTask: Task<Void, Never>?
     @ObservationIgnored private var screenSignature: [CGDirectDisplayID] = []
     @ObservationIgnored private var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    @ObservationIgnored private var lastBrightnessWrite: ContinuousClock.Instant = .now - .seconds(10)
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -128,7 +162,8 @@ final class BoostController {
     }
 
     private func targetFactor(for displayID: CGDirectDisplayID) -> Float {
-        BoostMath.factor(headroom: Self.headroom(for: displayID), strength: Float(strength))
+        let strength = SliderLevel.effectiveStrength(brightness: brightness, strength: strength)
+        return BoostMath.factor(headroom: Self.headroom(for: displayID), strength: Float(strength))
     }
 
     private func fadeToTargets() async {
@@ -144,6 +179,7 @@ final class BoostController {
             }
             try? await Task.sleep(for: .milliseconds(20))
         }
+        appliedFactor = sessions.map(\.factor).max() ?? 1
     }
 
     private func applyTargets(force: Bool = false) {
@@ -151,8 +187,11 @@ final class BoostController {
             let target = targetFactor(for: sessions[index].displayID)
             guard force || abs(target - sessions[index].factor) > 0.005 else { continue }
             sessions[index].gamma.apply(factor: target)
+            Self.log.info("factor \(target) display \(self.sessions[index].displayID)")
             sessions[index].factor = target
         }
+        let factor = sessions.map(\.factor).max() ?? 1
+        if factor != appliedFactor { appliedFactor = factor }
     }
 
     private func startMonitoring() {
@@ -161,6 +200,7 @@ final class BoostController {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
                 guard !Task.isCancelled else { return }
+                refreshBrightness()
                 applyTargets(force: sessions.contains { $0.gamma.hasDrifted })
             }
         }
@@ -181,6 +221,7 @@ final class BoostController {
             session.window.close()
         }
         sessions = []
+        appliedFactor = 1
     }
 
     private func observeSystemEvents() {
