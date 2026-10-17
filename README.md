@@ -34,4 +34,4 @@ cd brighter
 make run
 ```
 
-`make test` runs the tests, `make install` builds a release copy into `/Applications`, and `make release` publishes one.
+`make test` runs the tests and `make install` builds a release copy into `/Applications`. Every push to `main` is built, signed, notarized and published as a release by CI.

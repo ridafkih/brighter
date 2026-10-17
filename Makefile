@@ -1,8 +1,7 @@
 -include Local.mk
 SIGN_IDENTITY ?= -
-VERSION := $(shell sed -n 's/.*CFBundleShortVersionString: "\(.*\)"/\1/p' project.yml)
 
-.PHONY: generate build test run release-build install release clean
+.PHONY: generate build test run release-build install clean
 
 generate:
 	xcodegen generate --quiet
@@ -25,10 +24,6 @@ install: release-build
 	rm -rf /Applications/Brighter.app
 	cp -R build/Build/Products/Release/Brighter.app /Applications/
 	open /Applications/Brighter.app
-
-release: release-build
-	ditto -c -k --keepParent build/Build/Products/Release/Brighter.app build/Brighter.zip
-	gh release create "v$(VERSION)" build/Brighter.zip --title "Brighter $(VERSION)" --generate-notes
 
 clean:
 	rm -rf build Brighter.xcodeproj Packages/BrighterCore/.build
