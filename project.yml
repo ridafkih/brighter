@@ -1,0 +1,47 @@
+name: Brighter
+options:
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+packages:
+  BrighterCore:
+    path: Packages/BrighterCore
+targets:
+  Brighter:
+    type: application
+    platform: macOS
+    sources:
+      - App
+    dependencies:
+      - package: BrighterCore
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Brighter
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+    entitlements:
+      path: App/Brighter.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ridafkih.Brighter
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: YES
+schemes:
+  Brighter:
+    build:
+      targets:
+        Brighter: all
+    run:
+      config: Debug
