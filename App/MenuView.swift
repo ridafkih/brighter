@@ -134,13 +134,11 @@ struct LevelSlider: View {
                     .opacity(notch == nil ? 0 : 1)
 
                 Rectangle()
-                    .fill(colorScheme == .dark ? Color.white : Color.black.opacity(0.78))
-                    .frame(width: max(min(fillWidth, notchX), 0), height: trackHeight)
-
-                Rectangle()
-                    .fill(LinearGradient(colors: [.yellow, .orange], startPoint: .leading, endPoint: .trailing))
-                    .frame(width: notch == nil ? 0 : max(fillWidth - notchX, 0), height: trackHeight)
-                    .offset(x: notchX)
+                    .fill(fill(notchAt: notch == nil || width == 0 ? nil : notchX / width))
+                    .frame(width: width, height: trackHeight)
+                    .mask(alignment: .leading) {
+                        Rectangle().frame(width: max(fillWidth, 0))
+                    }
 
                 Image(systemName: "sun.max.fill")
                     .font(.system(size: 11, weight: .semibold))
@@ -182,6 +180,23 @@ struct LevelSlider: View {
             let step = direction == .increment ? 0.05 : -0.05
             value = min(max(value + step, 0), upperBound)
         }
+    }
+
+    private func fill(notchAt location: CGFloat?) -> LinearGradient {
+        let base = colorScheme == .dark ? Color.white : Color.black.opacity(0.78)
+        guard let location else {
+            return LinearGradient(colors: [base, base], startPoint: .leading, endPoint: .trailing)
+        }
+        return LinearGradient(
+            stops: [
+                .init(color: base, location: 0),
+                .init(color: base, location: location),
+                .init(color: .yellow, location: location),
+                .init(color: .orange, location: 1)
+            ],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
     }
 
     private func position(of level: Double, in width: CGFloat) -> CGFloat {
