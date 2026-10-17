@@ -6,3 +6,4 @@ DerivedData/
 App/Info.plist
 .swiftpm/
 xcuserdata/
+Local.mk
